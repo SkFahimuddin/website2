@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Website</title>
+</head>
+<body>
+    <h1>Website</h1>
+    <input type="text" id="inputBox" placeholder="Type here">
+    <br><br>
+    <div id="outputBox" style="border: 1px solid black; padding: 10px; width: 300px; height: 200px; overflow-y: auto;">
+        <!-- Messages will appear here -->
+    </div>
+    <button id="clearMessages">Clear Messages</button>
+
+    
+    <script>
+        const ws = new WebSocket('ws://localhost:8080');
+
+        const inputBox = document.getElementById('inputBox');
+        const outputBox = document.getElementById('outputBox');
+
+        // Function to load messages from local storage
+        const loadMessages = () => {
+            const savedMessages = JSON.parse(localStorage.getItem('messages')) || [];
+            savedMessages.forEach((message) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.textContent = message;
+                outputBox.appendChild(messageDiv);
+            });
+        };
+
+        // Function to save a message to local storage
+        const saveMessage = (message) => {
+            const savedMessages = JSON.parse(localStorage.getItem('messages')) || [];
+            savedMessages.push(message);
+            localStorage.setItem('messages', JSON.stringify(savedMessages));
+        };
+
+        // Load messages when the page loads
+        loadMessages();
+
+        // Handle incoming WebSocket messages
+        ws.onmessage = (event) => {
+            const message = event.data;
+
+            // Save the message to local storage
+            saveMessage(message);
+
+            // Display the message
+            const newMessage = document.createElement('div');
+            newMessage.textContent = message;
+            outputBox.prepend(newMessage);
+        };
+
+        // Send input box data to WebSocket on Enter key press
+        inputBox.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const messageToSend = inputBox.value.trim(); // Trim whitespace
+                if (messageToSend) {
+                    ws.send(messageToSend); // Send plain text
+                    inputBox.value = '';   // Clear input box
+                }
+            }
+        });
+        document.getElementById('clearMessages').addEventListener('click', () => {
+    localStorage.removeItem('messages'); // Clear stored messages
+    outputBox.innerHTML = '';           // Clear displayed messages
+});
+    </script>
+</body>
+</html>
